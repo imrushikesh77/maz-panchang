@@ -1,8 +1,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InteractionManager, PanResponder, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { MarathiDistrict } from '../types';
 import { getOfflineYear, getPanchangForDate } from '../services/panchangService';
-import { addDays, formatLocalTime, formatMarathiDate, formatMarathiWeekdayShort, isSameDay, toDateKey } from '../utils/date';
+import { addDays, formatLocalTime, formatMarathiDate, formatMarathiNumber, formatMarathiWeekdayShort, isSameDay, toDateKey, toMarathiDigits } from '../utils/date';
 import { normalizeMarathi } from '../utils/marathi';
 import { colors, spacing } from '../constants/theme';
 import { SectionCard } from '../components/SectionCard';
@@ -104,9 +105,9 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
                 },
                 onPanResponderRelease: (_, gestureState) => {
                     if (gestureState.dx > 40) {
-                        goToNextDay();
-                    } else if (gestureState.dx < -40) {
                         goToPreviousDay();
+                    } else if (gestureState.dx < -40) {
+                        goToNextDay();
                     }
                 }
             }),
@@ -120,10 +121,10 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
     const activeTomorrowBundle = activeBundle ? tomorrowBundle : null;
     const weekdayShort = formatMarathiWeekdayShort(selectedDate);
     const titleLabel = isToday ? 'आज' : weekdayShort;
-    const monthYearLabel = selectedDate.toLocaleDateString('mr-IN', {
+    const monthYearLabel = toMarathiDigits(selectedDate.toLocaleDateString('mr-IN', {
         month: 'long',
         year: 'numeric'
-    });
+    }));
     const selectedFestivalCount = activeBundle?.marathiFestivals.length ?? 0;
     const selectedUpwasCount = activeBundle?.upwasItems.length ?? 0;
     const showingInitialLoading = loading && !bundle;
@@ -147,175 +148,180 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
         return (
             <View style={styles.center}>
                 <Text style={styles.error}>{error || 'तांत्रिक अडचण'}</Text>
-                <Text style={styles.helper}>ऑफलाइन वर्ष: {getOfflineYear()}</Text>
+                <Text style={styles.helper}>ऑफलाइन वर्ष: {formatMarathiNumber(getOfflineYear())}</Text>
             </View>
         );
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            refreshControl={
-                <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={() => {
-                        setRefreshing(true);
-                        void load(selectedDate);
-                    }}
-                    tintColor={colors.primary}
-                />
-            }
-            {...panResponder.panHandlers}
-        >
-            <View style={styles.heroCard}>
-                <View style={styles.heroTopRow}>
-                    <View style={styles.titleGroup}>
-                        <Text style={styles.heroEyebrow}>{titleLabel}</Text>
-                        <Text style={styles.heroSub}>{formatMarathiDate(selectedDate)}</Text>
-                    </View>
-                    {isToday ? (
-                        <View style={styles.todayBadge}>
-                            <Text style={styles.todayBadgeText}>आजचा दिवस</Text>
+        <View style={styles.page} {...panResponder.panHandlers}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.content}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={() => {
+                            setRefreshing(true);
+                            void load(selectedDate);
+                        }}
+                        tintColor={colors.primary}
+                    />
+                }
+            >
+                <View style={styles.heroCard}>
+                    <View style={styles.heroTopRow}>
+                        <View style={styles.titleGroup}>
+                            <Text style={styles.heroEyebrow}>{titleLabel}</Text>
+                            <Text style={styles.heroSub}>{formatMarathiDate(selectedDate)}</Text>
                         </View>
-                    ) : (
-                        <Pressable style={styles.todayBtn} onPress={goToToday}>
-                            <Text style={styles.todayBtnText}>आज</Text>
-                        </Pressable>
+                        {isToday ? (
+                            <View style={styles.todayBadge}>
+                                <Text style={styles.todayBadgeText}>आजचा दिवस</Text>
+                            </View>
+                        ) : (
+                            <Pressable style={styles.todayBtn} onPress={goToToday}>
+                                <Text style={styles.todayBtnText}>आज</Text>
+                            </Pressable>
+                        )}
+                    </View>
+
+                    <View style={styles.heroDateRow}>
+                        <View style={styles.dateBlock}>
+                            <Text style={[styles.dateNumber, largeTextMode && styles.dateNumberLarge]}>
+                                {formatMarathiNumber(selectedDate.getDate())}
+                            </Text>
+                            <Text style={styles.monthYear}>{monthYearLabel}</Text>
+                        </View>
+                        <View style={styles.dateMetaWrap}>
+                            <View style={styles.metaChip}>
+                                <Text style={styles.metaLabel}>वार</Text>
+                                <Text style={styles.metaValue}>{weekdayShort}</Text>
+                            </View>
+                            <View style={styles.metaChip}>
+                                <Text style={styles.metaLabel}>जिल्हा</Text>
+                                <Text style={styles.metaValue} numberOfLines={1}>
+                                    {district.name}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.swipeHelpRow}>
+                        <Text style={styles.swipeHelp}>◀ उजवीकडे</Text>
+                        <Text style={styles.swipeHelpCenter}>डावीकडे / उजवीकडे स्वाइप करा</Text>
+                        <Text style={styles.swipeHelp}>पुढचा ▶</Text>
+                    </View>
+
+                    {(updating || refreshing) && (
+                        <View style={styles.loadingPill}>
+                            <Text style={styles.loadingPillText}>माहिती आणत आहे...</Text>
+                        </View>
                     )}
                 </View>
 
-                <View style={styles.heroDateRow}>
-                    <View style={styles.dateBlock}>
-                        <Text style={[styles.dateNumber, largeTextMode && styles.dateNumberLarge]}>
-                            {selectedDate.toLocaleDateString('mr-IN', { day: 'numeric' })}
-                        </Text>
-                        <Text style={styles.monthYear}>{monthYearLabel}</Text>
+                <View style={styles.quickRow}>
+                    <View style={styles.quickCard}>
+                        <MaterialCommunityIcons name="party-popper" size={24} color={colors.primary} style={styles.quickIcon} />
+                        <Text style={styles.quickLabel}>आजचे सण</Text>
+                        <Text style={styles.quickValue}>{formatMarathiNumber(selectedFestivalCount)}</Text>
                     </View>
-                    <View style={styles.dateMetaWrap}>
-                        <View style={styles.metaChip}>
-                            <Text style={styles.metaLabel}>वार</Text>
-                            <Text style={styles.metaValue}>{weekdayShort}</Text>
-                        </View>
-                        <View style={styles.metaChip}>
-                            <Text style={styles.metaLabel}>जिल्हा</Text>
-                            <Text style={styles.metaValue} numberOfLines={1}>
-                                {district.name}
-                            </Text>
-                        </View>
+                    <View style={styles.quickCard}>
+                        <MaterialCommunityIcons name="moon-waning-crescent" size={24} color={colors.primary} style={styles.quickIcon} />
+                        <Text style={styles.quickLabel}>उपवास</Text>
+                        <Text style={styles.quickValue}>{formatMarathiNumber(selectedUpwasCount)}</Text>
                     </View>
                 </View>
 
-                <View style={styles.swipeHelpRow}>
-                    <Text style={styles.swipeHelp}>◀ मागचा दिवस</Text>
-                    <Text style={styles.swipeHelpCenter}>डावीकडे / उजवीकडे स्वाइप करा</Text>
-                    <Text style={styles.swipeHelp}>पुढचा दिवस ▶</Text>
-                </View>
-
-                {(updating || refreshing) && (
-                    <View style={styles.loadingPill}>
-                        <Text style={styles.loadingPillText}>माहिती आणत आहे...</Text>
+                {!activeBundle ? (
+                    <View style={styles.sectionLoadingWrap}>
+                        <Text style={styles.sectionLoadingText}>या दिवसाची माहिती लोड होत आहे...</Text>
                     </View>
-                )}
-            </View>
+                ) : (
+                    <>
+                        <SectionCard title="पंचांग माहिती" icon="book-open-page-variant-outline">
+                            <InfoRow largeTextMode={largeTextMode} label="वार" value={normalizeMarathi(activeBundle.data.vara.name)} icon="calendar-today" />
+                            <InfoRow largeTextMode={largeTextMode} label="तिथी" value={normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '—')} icon="moon-first-quarter" />
+                            <InfoRow largeTextMode={largeTextMode} label="नक्षत्र" value={normalizeMarathi(activeBundle.data.nakshatras[0]?.name ?? '—')} icon="star-four-points" />
+                            <InfoRow largeTextMode={largeTextMode} label="योग" value={normalizeMarathi(activeBundle.data.yogas[0]?.name ?? '—')} icon="meditation" />
+                            <InfoRow largeTextMode={largeTextMode} label="करण" value={normalizeMarathi(activeBundle.data.karanas[0]?.name ?? '—')} icon="leaf" />
+                        </SectionCard>
 
-            <View style={styles.quickRow}>
-                <View style={styles.quickCard}>
-                    <Text style={styles.quickIcon}>🌼</Text>
-                    <Text style={styles.quickLabel}>आजचे सण</Text>
-                    <Text style={styles.quickValue}>{selectedFestivalCount}</Text>
-                </View>
-                <View style={styles.quickCard}>
-                    <Text style={styles.quickIcon}>🕉</Text>
-                    <Text style={styles.quickLabel}>उपवास</Text>
-                    <Text style={styles.quickValue}>{selectedUpwasCount}</Text>
-                </View>
-            </View>
+                        <SectionCard title="महत्त्वाच्या वेळा" icon="clock-outline">
+                            <InfoRow largeTextMode={largeTextMode} label="सूर्योदय" value={formatLocalTime(activeBundle.data.sunrise)} icon="weather-sunset-up" />
+                            <InfoRow largeTextMode={largeTextMode} label="सूर्यास्त" value={formatLocalTime(activeBundle.data.sunset)} icon="weather-sunset-down" />
+                            <InfoRow
+                                largeTextMode={largeTextMode}
+                                label="राहुकाल"
+                                value={`${formatLocalTime(activeBundle.data.rahuKalam.start)} - ${formatLocalTime(activeBundle.data.rahuKalam.end)}`}
+                                icon="clock-alert-outline"
+                            />
+                            <InfoRow
+                                largeTextMode={largeTextMode}
+                                label="गुलिककाल"
+                                value={`${formatLocalTime(activeBundle.data.gulikaKalam.start)} - ${formatLocalTime(activeBundle.data.gulikaKalam.end)}`}
+                                icon="timer-sand-empty"
+                            />
+                            <InfoRow
+                                largeTextMode={largeTextMode}
+                                label="यमगंड"
+                                value={`${formatLocalTime(activeBundle.data.yamaganda.start)} - ${formatLocalTime(activeBundle.data.yamaganda.end)}`}
+                                icon="alert-circle-outline"
+                            />
+                            <InfoRow
+                                largeTextMode={largeTextMode}
+                                label="अभिजीत मुहूर्त"
+                                value={`${formatLocalTime(activeBundle.data.abhijitMuhurta.start)} - ${formatLocalTime(activeBundle.data.abhijitMuhurta.end)}`}
+                                icon="star-circle"
+                            />
+                        </SectionCard>
 
-            {!activeBundle ? (
-                <View style={styles.sectionLoadingWrap}>
-                    <Text style={styles.sectionLoadingText}>या दिवसाची माहिती लोड होत आहे...</Text>
-                </View>
-            ) : (
-                <>
-                    <SectionCard title="पंचांग माहिती" icon="📜">
-                        <InfoRow largeTextMode={largeTextMode} label="वार" value={normalizeMarathi(activeBundle.data.vara.name)} icon="🗓" />
-                        <InfoRow largeTextMode={largeTextMode} label="तिथी" value={normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '—')} icon="◈" />
-                        <InfoRow largeTextMode={largeTextMode} label="नक्षत्र" value={normalizeMarathi(activeBundle.data.nakshatras[0]?.name ?? '—')} icon="✦" />
-                        <InfoRow largeTextMode={largeTextMode} label="योग" value={normalizeMarathi(activeBundle.data.yogas[0]?.name ?? '—')} icon="✧" />
-                        <InfoRow largeTextMode={largeTextMode} label="करण" value={normalizeMarathi(activeBundle.data.karanas[0]?.name ?? '—')} icon="❖" />
-                    </SectionCard>
-
-                    <SectionCard title="महत्त्वाची वेळा" icon="☀">
-                        <InfoRow largeTextMode={largeTextMode} label="सूर्योदय" value={formatLocalTime(activeBundle.data.sunrise)} icon="☀" />
-                        <InfoRow largeTextMode={largeTextMode} label="सूर्यास्त" value={formatLocalTime(activeBundle.data.sunset)} icon="🌇" />
-                        <InfoRow
-                            largeTextMode={largeTextMode}
-                            label="राहुकाल"
-                            value={`${formatLocalTime(activeBundle.data.rahuKalam.start)} - ${formatLocalTime(activeBundle.data.rahuKalam.end)}`}
-                            icon="⏳"
-                        />
-                        <InfoRow
-                            largeTextMode={largeTextMode}
-                            label="गुलिककाल"
-                            value={`${formatLocalTime(activeBundle.data.gulikaKalam.start)} - ${formatLocalTime(activeBundle.data.gulikaKalam.end)}`}
-                            icon="⌛"
-                        />
-                        <InfoRow
-                            largeTextMode={largeTextMode}
-                            label="यमगंड"
-                            value={`${formatLocalTime(activeBundle.data.yamaganda.start)} - ${formatLocalTime(activeBundle.data.yamaganda.end)}`}
-                            icon="⚑"
-                        />
-                        <InfoRow
-                            largeTextMode={largeTextMode}
-                            label="अभिजीत मुहूर्त"
-                            value={`${formatLocalTime(activeBundle.data.abhijitMuhurta.start)} - ${formatLocalTime(activeBundle.data.abhijitMuhurta.end)}`}
-                            icon="✧"
-                        />
-                    </SectionCard>
-
-                    <SectionCard title="सण / उपवास" icon="🌺">
-                        {activeBundle.marathiFestivals.length === 0 ? (
-                            <Text style={styles.empty}>आज विशेष सण नाही.</Text>
-                        ) : (
-                            activeBundle.marathiFestivals.map((item) => (
-                                <Text key={item} style={[styles.list, largeTextMode && styles.listLarge]}>
-                                    • {item}
-                                </Text>
-                            ))
-                        )}
-                        {activeBundle.upwasItems.length > 0 && <Text style={styles.upwasHint}>उपवास / व्रत आहे.</Text>}
-                    </SectionCard>
-
-                    <SectionCard title="उद्याचे विशेष" icon="⏭">
-                        {!activeTomorrowBundle ? (
-                            <Text style={styles.empty}>उद्याची माहिती उपलब्ध नाही.</Text>
-                        ) : (
-                            <>
-                                <Text style={styles.tomorrowLabel}>
-                                    तिथी: {normalizeMarathi(activeTomorrowBundle.data.tithis[0]?.name ?? '—')}
-                                </Text>
-                                {activeTomorrowBundle.marathiFestivals.length > 0 ? (
-                                    activeTomorrowBundle.marathiFestivals.slice(0, 4).map((item) => (
-                                        <Text key={`tomorrow-${item}`} style={[styles.list, largeTextMode && styles.listLarge]}>
-                                            • {item}
+                        <SectionCard title="सण / उपवास" icon="calendar-star">
+                            {activeBundle.marathiFestivals.length === 0 ? (
+                                <Text style={styles.empty}>आज विशेष सण नाही.</Text>
+                            ) : (
+                                activeBundle.marathiFestivals.map((item) => {
+                                    const isUpwas = activeBundle.upwasItems.includes(item);
+                                    return (
+                                        <Text key={item} style={[styles.list, isUpwas && styles.listUpwas, largeTextMode && styles.listLarge]}>
+                                            • {item} {isUpwas && '(उपवास)'}
                                         </Text>
-                                    ))
-                                ) : (
-                                    <Text style={styles.empty}>उद्या प्रमुख सण नाही.</Text>
-                                )}
-                                {activeTomorrowBundle.upwasItems.length > 0 && <Text style={styles.upwasHint}>उद्या उपवास / व्रत आहे.</Text>}
-                            </>
-                        )}
-                    </SectionCard>
-                </>
-            )}
+                                    );
+                                })
+                            )}
+                        </SectionCard>
 
-            <View style={styles.footerNote}>
-                <Text style={styles.footerNoteText}>ऑफलाइन वर्ष: {getOfflineYear()}</Text>
-            </View>
-        </ScrollView>
+                        <SectionCard title="उद्याचे विशेष" icon="calendar-arrow-right">
+                            {!activeTomorrowBundle ? (
+                                <Text style={styles.empty}>उद्याची माहिती उपलब्ध नाही.</Text>
+                            ) : (
+                                <>
+                                    <Text style={styles.tomorrowLabel}>
+                                        तिथी: {normalizeMarathi(activeTomorrowBundle.data.tithis[0]?.name ?? '—')}
+                                    </Text>
+                                    {activeTomorrowBundle.marathiFestivals.length > 0 ? (
+                                        activeTomorrowBundle.marathiFestivals.slice(0, 4).map((item) => {
+                                            const isUpwas = activeTomorrowBundle.upwasItems.includes(item);
+                                            return (
+                                                <Text key={`tomorrow-${item}`} style={[styles.list, isUpwas && styles.listUpwas, largeTextMode && styles.listLarge]}>
+                                                    • {item} {isUpwas && '(उपवास)'}
+                                                </Text>
+                                            );
+                                        })
+                                    ) : (
+                                        <Text style={styles.empty}>उद्या प्रमुख सण नाही.</Text>
+                                    )}
+                                </>
+                            )}
+                        </SectionCard>
+                    </>
+                )}
+
+                <View style={styles.footerNote}>
+                    <Text style={styles.footerNoteText}>ऑफलाइन वर्ष: {formatMarathiNumber(getOfflineYear())}</Text>
+                </View>
+            </ScrollView>
+        </View>
     );
 }
 
@@ -325,6 +331,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.bg
+    },
+    page: {
+        flex: 1
     },
     content: {
         padding: spacing.md,
@@ -354,10 +363,10 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm
     },
     heroCard: {
-        backgroundColor: '#FFF8EC',
+        backgroundColor: '#FFF3E0',
         borderRadius: 22,
         borderWidth: 1,
-        borderColor: '#D9C1A6',
+        borderColor: '#FFB74D',
         padding: spacing.md,
         marginBottom: spacing.sm,
         elevation: 2
@@ -373,9 +382,9 @@ const styles = StyleSheet.create({
     },
     heroEyebrow: {
         color: colors.primary,
-        fontSize: 28,
+        fontSize: 31,
         fontWeight: '900',
-        lineHeight: 32
+        lineHeight: 42,
     },
     heroSub: {
         color: colors.muted,
@@ -384,18 +393,18 @@ const styles = StyleSheet.create({
         fontWeight: '600'
     },
     todayBadge: {
-        backgroundColor: '#7A1E5B',
+        backgroundColor: colors.upwas,
         borderRadius: 999,
         paddingHorizontal: 10,
         paddingVertical: 6
     },
     todayBadgeText: {
-        color: '#FFF9F0',
+        color: '#FFFFFF',
         fontSize: 12,
         fontWeight: '800'
     },
     todayBtn: {
-        backgroundColor: '#F6D7B7',
+        backgroundColor: '#FFE0B2',
         borderColor: colors.primary,
         borderWidth: 1,
         borderRadius: 999,
@@ -417,7 +426,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFDF8',
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: '#E7D3BC',
+        borderColor: '#FFCC80',
         paddingVertical: 16,
         paddingHorizontal: 14,
         alignItems: 'center',
@@ -448,7 +457,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFDF8',
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#E7D3BC',
+        borderColor: '#FFCC80',
         paddingHorizontal: 12,
         paddingVertical: 10
     },
@@ -483,7 +492,7 @@ const styles = StyleSheet.create({
     loadingPill: {
         marginTop: spacing.sm,
         alignSelf: 'flex-start',
-        backgroundColor: '#F6D7B7',
+        backgroundColor: '#FFE0B2',
         borderRadius: 999,
         paddingHorizontal: 10,
         paddingVertical: 5
@@ -538,6 +547,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 5,
         fontWeight: '700'
+    },
+    listUpwas: {
+        color: colors.upwas
     },
     listLarge: {
         fontSize: 18

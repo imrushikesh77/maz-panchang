@@ -1,17 +1,18 @@
 import { memo, PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, spacing } from '../constants/theme';
 
 type Props = PropsWithChildren<{
     title: string;
-    icon?: string;
+    icon?: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 }>;
 
 function SectionCardBase({ title, icon, children }: Props) {
     return (
         <View style={styles.card}>
             <View style={styles.titleRow}>
-                {!!icon && <Text style={styles.icon}>{icon}</Text>}
+                {!!icon && <MaterialCommunityIcons name={icon} size={22} color={colors.primary} style={styles.icon} />}
                 <Text style={styles.title}>{title}</Text>
             </View>
             {children}
@@ -37,11 +38,10 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
         paddingBottom: 8,
         borderBottomWidth: 1,
-        borderBottomColor: '#E9DAC6'
+        borderBottomColor: '#F0E1CF' // matching the InfoRow border color slightly
     },
     icon: {
-        fontSize: 17,
-        color: colors.primary
+        opacity: 0.9
     },
     title: {
         fontSize: 18,

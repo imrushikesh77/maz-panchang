@@ -1,3 +1,9 @@
+const MARATHI_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+
+export const toMarathiDigits = (value: string | number) => {
+    return String(value).replace(/\d/g, (match) => MARATHI_DIGITS[parseInt(match, 10)]);
+};
+
 export const toDateKey = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -12,16 +18,17 @@ export const formatLocalTime = (date: Date | null | undefined) => {
 
     const h = String(date.getUTCHours()).padStart(2, '0');
     const m = String(date.getUTCMinutes()).padStart(2, '0');
-    return `${h}:${m}`;
+    return toMarathiDigits(`${h}:${m}`);
 };
 
 export const formatMarathiDate = (date: Date) => {
-    return date.toLocaleDateString('mr-IN', {
+    const raw = date.toLocaleDateString('mr-IN', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
         weekday: 'long'
     });
+    return toMarathiDigits(raw);
 };
 
 export const formatMarathiWeekdayShort = (date: Date) => {
@@ -31,10 +38,15 @@ export const formatMarathiWeekdayShort = (date: Date) => {
 };
 
 export const formatMarathiMonthYear = (date: Date) => {
-    return date.toLocaleDateString('mr-IN', {
+    const raw = date.toLocaleDateString('mr-IN', {
         month: 'long',
         year: 'numeric'
     });
+    return toMarathiDigits(raw);
+};
+
+export const formatMarathiNumber = (value: number) => {
+    return toMarathiDigits(value);
 };
 
 export const addDays = (date: Date, days: number) => {

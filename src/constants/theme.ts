@@ -1,12 +1,12 @@
 export const colors = {
-    bg: '#F7F0E3',
-    card: '#FFF9F0',
-    text: '#2A1C12',
-    muted: '#6C5A4E',
-    primary: '#9C4B14',
-    border: '#D9C1A6',
-    upwas: '#7A1E5B',
-    festival: '#0F766E'
+    bg: '#FFF8F0',
+    card: '#FFFFFF',
+    text: '#3E2723',
+    muted: '#8D6E63',
+    primary: '#E65100', // Saffron / Deep Orange
+    border: '#FFCC80',
+    upwas: '#900C3F',   // Deep Maroon for Upwas
+    festival: '#D35400' // Saffron/Orange for Festival
 } as const;
 
 export const spacing = {

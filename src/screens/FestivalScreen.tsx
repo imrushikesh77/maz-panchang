@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { FlatList, InteractionManager, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { MarathiDistrict } from '../types';
 import { getOfflineYear, getPanchangForDate } from '../services/panchangService';
+import { toMarathiDigits, formatMarathiNumber } from '../utils/date';
 import { colors, spacing } from '../constants/theme';
 import { ShimmerBlock } from '../components/ShimmerBlock';
 
@@ -56,7 +57,7 @@ function FestivalScreenBase({ district, largeTextMode }: Props) {
                     const isUpwas = bundle.upwasItems.includes(name);
                     nextRows.push({
                         id: `${bundle.dateKey}-${name}`,
-                        dateLabel: date.toLocaleDateString('mr-IN', { day: 'numeric', month: 'short', weekday: 'short' }),
+                        dateLabel: toMarathiDigits(date.toLocaleDateString('mr-IN', { day: 'numeric', month: 'short', weekday: 'short' })),
                         eventName: name,
                         isUpwas,
                         type: isUpwas ? 'upwas' : 'festival'
@@ -119,11 +120,11 @@ function FestivalScreenBase({ district, largeTextMode }: Props) {
             <View style={styles.summaryRow}>
                 <View style={styles.summaryCard}>
                     <Text style={styles.summaryLabel}>सण</Text>
-                    <Text style={styles.summaryValue}>{festivalCount}</Text>
+                    <Text style={styles.summaryValue}>{formatMarathiNumber(festivalCount)}</Text>
                 </View>
                 <View style={styles.summaryCard}>
                     <Text style={styles.summaryLabel}>उपवास</Text>
-                    <Text style={styles.summaryValue}>{upwasCount}</Text>
+                    <Text style={styles.summaryValue}>{formatMarathiNumber(upwasCount)}</Text>
                 </View>
             </View>
 
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     },
     filterChipActive: {
         borderColor: colors.primary,
-        backgroundColor: '#F7D7B8'
+        backgroundColor: '#FFE0B2'
     },
     filterChipText: {
         color: colors.muted,
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
     loadMoreBtn: {
         marginTop: spacing.sm,
         alignSelf: 'center',
-        backgroundColor: '#F7D7B8',
+        backgroundColor: '#FFE0B2',
         borderColor: colors.primary,
         borderWidth: 1,
         borderRadius: 14,

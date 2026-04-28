@@ -97,7 +97,7 @@ function SettingsScreenBase({ settings, onChange }: Props) {
             </View>
 
             <Text style={styles.note}>
-                सूचना नक्की येण्यासाठी एकदा अॅप उघडणे आवश्यक आहे.
+                सूचना नक्की येण्यासाठी एकदा ॲप उघडणे आवश्यक आहे.
             </Text>
         </ScrollView>
     );
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     },
     autoBtn: {
         alignSelf: 'flex-start',
-        backgroundColor: '#F7D7B8',
+        backgroundColor: '#FFE0B2',
         borderColor: colors.primary,
         borderWidth: 1,
         borderRadius: 14,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
         paddingVertical: 6
     },
     chipActive: {
-        backgroundColor: '#F7D7B8',
+        backgroundColor: '#FFE0B2',
         borderColor: colors.primary
     },
     chipText: {

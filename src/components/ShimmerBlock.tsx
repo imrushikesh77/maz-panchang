@@ -8,7 +8,7 @@ type Props = {
     style?: ViewStyle;
 };
 
-export function ShimmerBlock({ width = '100%', height, borderRadius = 8, style }: Props) {
+export function ShimmerBlock({ width, height, borderRadius = 8, style }: Props) {
     const opacity = useRef(new Animated.Value(0.35)).current;
 
     useEffect(() => {
@@ -36,10 +36,10 @@ export function ShimmerBlock({ width = '100%', height, borderRadius = 8, style }
             style={[
                 styles.base,
                 {
-                    width,
                     height,
                     borderRadius,
-                    opacity
+                    opacity,
+                    ...(width !== undefined ? { width } : {})
                 },
                 style
             ]}

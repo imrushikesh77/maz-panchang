@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     gap: 2
   },
   tabBtnActive: {
-    backgroundColor: '#F7D7B8'
+    backgroundColor: '#FFE0B2'
   },
   tabIcon: {
     color: colors.muted,
