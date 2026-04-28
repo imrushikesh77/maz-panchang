@@ -1,0 +1,41 @@
+import type { MarathiDistrict } from '../types';
+
+export const MAHARASHTRA_DISTRICTS: MarathiDistrict[] = [
+    { id: 'mumbai', name: 'मुंबई', latitude: 19.076, longitude: 72.8777 },
+    { id: 'thane', name: 'ठाणे', latitude: 19.2183, longitude: 72.9781 },
+    { id: 'palghar', name: 'पालघर', latitude: 19.6967, longitude: 72.7653 },
+    { id: 'raigad', name: 'रायगड', latitude: 18.6414, longitude: 72.8722 },
+    { id: 'ratnagiri', name: 'रत्नागिरी', latitude: 16.9902, longitude: 73.312 },
+    { id: 'sindhudurg', name: 'सिंधुदुर्ग', latitude: 16.1667, longitude: 73.55 },
+    { id: 'pune', name: 'पुणे', latitude: 18.5204, longitude: 73.8567 },
+    { id: 'satara', name: 'सातारा', latitude: 17.6805, longitude: 74.0183 },
+    { id: 'sangli', name: 'सांगली', latitude: 16.8524, longitude: 74.5815 },
+    { id: 'kolhapur', name: 'कोल्हापूर', latitude: 16.705, longitude: 74.2433 },
+    { id: 'solapur', name: 'सोलापूर', latitude: 17.6599, longitude: 75.9064 },
+    { id: 'ahilyanagar', name: 'अहिल्यानगर', latitude: 19.0948, longitude: 74.748 },
+    { id: 'nashik', name: 'नाशिक', latitude: 19.9975, longitude: 73.7898 },
+    { id: 'jalgaon', name: 'जळगाव', latitude: 21.0077, longitude: 75.5626 },
+    { id: 'dhule', name: 'धुळे', latitude: 20.9042, longitude: 74.7749 },
+    { id: 'nandurbar', name: 'नंदुरबार', latitude: 21.7469, longitude: 74.124 },
+    { id: 'chhatrapati_sambhajinagar', name: 'छत्रपती संभाजीनगर', latitude: 19.8762, longitude: 75.3433 },
+    { id: 'jalna', name: 'जालना', latitude: 19.841, longitude: 75.8864 },
+    { id: 'beed', name: 'बीड', latitude: 18.9901, longitude: 75.7531 },
+    { id: 'dharashiv', name: 'धाराशिव', latitude: 18.181, longitude: 76.0419 },
+    { id: 'latur', name: 'लातूर', latitude: 18.4088, longitude: 76.5604 },
+    { id: 'nanded', name: 'नांदेड', latitude: 19.1383, longitude: 77.321 },
+    { id: 'parbhani', name: 'परभणी', latitude: 19.26, longitude: 76.77 },
+    { id: 'hingoli', name: 'हिंगोली', latitude: 19.72, longitude: 77.15 },
+    { id: 'nagpur', name: 'नागपूर', latitude: 21.1458, longitude: 79.0882 },
+    { id: 'wardha', name: 'वर्धा', latitude: 20.7453, longitude: 78.6022 },
+    { id: 'bhandara', name: 'भंडारा', latitude: 21.17, longitude: 79.65 },
+    { id: 'gondia', name: 'गोंदिया', latitude: 21.4549, longitude: 80.1961 },
+    { id: 'chandrapur', name: 'चंद्रपूर', latitude: 19.9615, longitude: 79.2961 },
+    { id: 'gadchiroli', name: 'गडचिरोली', latitude: 20.1809, longitude: 80.003 },
+    { id: 'amravati', name: 'अमरावती', latitude: 20.9374, longitude: 77.7796 },
+    { id: 'akola', name: 'अकोला', latitude: 20.7002, longitude: 77.0082 },
+    { id: 'buldhana', name: 'बुलढाणा', latitude: 20.5297, longitude: 76.1848 },
+    { id: 'washim', name: 'वाशीम', latitude: 20.1114, longitude: 77.133 },
+    { id: 'yavatmal', name: 'यवतमाळ', latitude: 20.3899, longitude: 78.1307 }
+];
+
+export const DEFAULT_DISTRICT_ID = 'pune';

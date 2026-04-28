@@ -1,0 +1,31 @@
+{
+    "version": "2026.1",
+    "source": "Maharashtra Government public holiday circular + district notices",
+    "events": [
+        {
+            "date": "2026-01-26",
+            "titleMr": "प्रजासत्ताक दिन",
+            "type": "gov-holiday",
+            "districts": [
+                "all"
+            ]
+        },
+        {
+            "date": "2026-07-01",
+            "titleMr": "पंढरपूर आषाढी वारी सोहळा",
+            "type": "temple-event",
+            "districts": [
+                "solapur",
+                "pune"
+            ]
+        },
+        {
+            "date": "2026-12-15",
+            "titleMr": "स्थानिक जत्रा उत्सव",
+            "type": "local-fair",
+            "districts": [
+                "satara"
+            ]
+        }
+    ]
+}
