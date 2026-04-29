@@ -491,7 +491,11 @@ const styles = StyleSheet.create({
         borderColor: '#FFB74D',
         padding: spacing.md,
         marginBottom: spacing.sm,
-        elevation: 2
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
     },
     heroTopRow: {
         flexDirection: 'row',
@@ -751,7 +755,12 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         borderWidth: 1,
         borderColor: colors.border,
-        padding: spacing.md
+        padding: spacing.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5
     },
     datePickerHeader: {
         flexDirection: 'row',

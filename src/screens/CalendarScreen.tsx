@@ -316,7 +316,7 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                                         const isSelected = detailOpen && day.dayNumber === selectedDay;
                                         const hasFestival = day.festivals.length > 0;
                                         const miniTithi = day.tithi.split(' ')[0] ?? day.tithi;
-                                        const isPurnima = /पोर्णिमा|पौर्णिमा/.test(day.tithi);
+                                        const isPurnima = /पूर्णिमा|पौर्णिमा|पोर्णिमा/.test(day.tithi);
                                         const isAmavasya = /अमावास्या|अमावस्या/.test(day.tithi);
                                         const isSunday = dayIndex === 6;
                                         const isSaturday = dayIndex === 5;
@@ -336,13 +336,24 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                                                     isSelected && !isToday && styles.cellSelected
                                                 ]}
                                                 onPress={() => openDetailForDay(day.dayNumber)}
+                                                accessibilityLabel={`Date ${formatMarathiNumber(day.dayNumber)}, ${miniTithi}, ${hasFestival ? 'Festival' : ''} ${day.hasUpwas ? 'Upwas' : ''} ${isPurnima ? 'Purnima' : ''} ${isAmavasya ? 'Amavasya' : ''}`}
                                             >
                                                 <View style={styles.cellTopRow}>
-                                                    <Text style={[styles.cellDay, isToday && styles.cellDayToday, isSelected && !isToday && styles.cellDaySelected]}>
+                                                    <Text style={[
+                                                        styles.cellDay,
+                                                        isToday && styles.cellDayToday,
+                                                        isSelected && !isToday && styles.cellDaySelected,
+                                                        isPurnima && styles.cellDayPurnima,
+                                                        isAmavasya && styles.cellDayAmavasya
+                                                    ]}>
                                                         {formatMarathiNumber(day.dayNumber)}
                                                     </Text>
                                                 </View>
-                                                <Text style={styles.cellMiniText} numberOfLines={2}>
+                                                <Text style={[
+                                                    styles.cellMiniText,
+                                                    isPurnima && styles.cellMiniTextPurnima,
+                                                    isAmavasya && styles.cellMiniTextAmavasya
+                                                ]} numberOfLines={2}>
                                                     {miniTithi}
                                                 </Text>
                                             </Pressable>
@@ -508,7 +519,12 @@ const styles = StyleSheet.create({
         borderColor: '#FFB74D',
         borderRadius: 20,
         padding: spacing.md,
-        marginBottom: spacing.sm
+        marginBottom: spacing.sm,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
     },
     navRow: {
         flexDirection: 'row',
@@ -593,14 +609,14 @@ const styles = StyleSheet.create({
         borderWidth: 1
     },
     legendPurnima: {
-        backgroundColor: '#DDD6FE', // Matches cellPurnima backgroundColor
-        borderColor: '#7C3AED',
-        borderWidth: 1
+        backgroundColor: '#3B82F6', // Matches cellPurnima backgroundColor
+        borderColor: '#1D4ED8',
+        borderWidth: 2
     },
     legendAmavasya: {
-        backgroundColor: '#E5E7EB', // Matches cellAmavasya backgroundColor
-        borderColor: '#1F2937',
-        borderWidth: 1
+        backgroundColor: '#1F2937', // Matches cellAmavasya backgroundColor
+        borderColor: '#182133',
+        borderWidth: 2
     },
     legendText: {
         color: colors.muted,
@@ -664,7 +680,12 @@ const styles = StyleSheet.create({
         borderColor: '#FFB74D',
         borderRadius: 18,
         padding: 8,
-        marginBottom: spacing.sm
+        marginBottom: spacing.sm,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
     },
     weekRow: {
         flexDirection: 'row',
@@ -704,12 +725,14 @@ const styles = StyleSheet.create({
         borderColor: '#E57373'
     },
     cellPurnima: {
-        backgroundColor: '#DDD6FE',
-        borderColor: '#7C3AED'
+        backgroundColor: '#3B82F6',
+        borderColor: '#1D4ED8',
+        borderWidth: 2
     },
     cellAmavasya: {
-        backgroundColor: '#E5E7EB',
-        borderColor: '#1F2937'
+        backgroundColor: '#1F2937',
+        borderColor: '#111827',
+        borderWidth: 2
     },
     cellToday: {
         borderColor: colors.primary,
@@ -737,6 +760,12 @@ const styles = StyleSheet.create({
     cellDaySelected: {
         color: colors.primary
     },
+    cellDayPurnima: {
+        color: '#FFFFFF'
+    },
+    cellDayAmavasya: {
+        color: '#FFFFFF'
+    },
     cellMiniText: {
         color: colors.muted,
         fontSize: 9,
@@ -746,6 +775,12 @@ const styles = StyleSheet.create({
         flexShrink: 1,
         minHeight: 22,
         paddingBottom: 4
+    },
+    cellMiniTextPurnima: {
+        color: '#FFFFFF'
+    },
+    cellMiniTextAmavasya: {
+        color: '#FFFFFF'
     },
     badge: {
         minWidth: 16,
@@ -777,7 +812,12 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: 18,
-        padding: spacing.md
+        padding: spacing.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
     },
     detailTopRow: {
         flexDirection: 'row',
@@ -860,7 +900,12 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 18,
         borderTopRightRadius: 18,
         maxHeight: '88%',
-        padding: spacing.md
+        padding: spacing.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5
     },
     modalHeader: {
         flexDirection: 'row',
@@ -908,7 +953,12 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         borderWidth: 1,
         borderColor: colors.border,
-        padding: spacing.md
+        padding: spacing.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5
     },
     monthPickerTitle: {
         color: colors.primary,

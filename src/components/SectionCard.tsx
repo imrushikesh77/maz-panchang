@@ -29,7 +29,12 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
         padding: spacing.md,
-        marginBottom: spacing.sm
+        marginBottom: spacing.sm,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2
     },
     titleRow: {
         flexDirection: 'row',
