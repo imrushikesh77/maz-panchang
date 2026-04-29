@@ -31,10 +31,16 @@
           "icon": "./assets/adaptive-icon.png",
           "color": "#A44917"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cedfb178-be72-4e62-a598-ac4e9fba805f"
+      }
     }
   }
 }
