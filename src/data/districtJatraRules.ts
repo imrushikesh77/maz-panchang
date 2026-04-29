@@ -18,7 +18,7 @@ const RULES: JatraRule[] = [
     {
         districtIds: ['ahilyanagar'],
         eventTitle: 'शिर्डी साईबाबा उत्सव',
-        triggerKeywords: ['राम नवमी', 'ram navami', 'विजयादशमी', 'दसरा', 'guru purnima', 'गुरु पूर्णिमा']
+        triggerKeywords: ['राम नवमी', 'ram navami', 'विजयादशमी', 'दसरा', 'guru purnima', 'गुरु पोर्णिमा']
     },
     {
         districtIds: ['kolhapur'],

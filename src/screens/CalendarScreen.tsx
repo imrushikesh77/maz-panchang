@@ -25,6 +25,7 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
     const [loadedMonthKey, setLoadedMonthKey] = useState('');
     const [selectedDay, setSelectedDay] = useState(1);
     const [detailOpen, setDetailOpen] = useState(false);
+    const [monthPickerOpen, setMonthPickerOpen] = useState(false);
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState('');
     const [detailBundle, setDetailBundle] = useState<Awaited<ReturnType<typeof getPanchangForDate>> | null>(null);
@@ -37,6 +38,10 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
     );
 
     const monthLabel = useMemo(() => formatMarathiMonthYear(monthDate), [monthDate]);
+    const monthOptions = useMemo(
+        () => Array.from({ length: 12 }, (_, index) => new Date(getOfflineYear(), index, 1)),
+        []
+    );
 
     const load = useCallback(async () => {
         const token = requestId.current + 1;
@@ -109,6 +114,13 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
         });
     }, []);
 
+    const openMonthPicker = useCallback(() => setMonthPickerOpen(true), []);
+    const closeMonthPicker = useCallback(() => setMonthPickerOpen(false), []);
+    const selectMonth = useCallback((index: number) => {
+        setMonthDate(new Date(getOfflineYear(), index, 1));
+        setMonthPickerOpen(false);
+    }, []);
+
     const weeks = useMemo(() => {
         const firstWeekday = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).getDay();
         const leadingPadding = firstWeekday === 0 ? 6 : firstWeekday - 1;
@@ -131,6 +143,24 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
 
         return output;
     }, [monthDate, rows]);
+
+    const skeletonWeeks = useMemo(() => {
+        const firstWeekday = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).getDay();
+        const leadingPadding = firstWeekday === 0 ? 6 : firstWeekday - 1;
+        const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+        const cells: boolean[] = [];
+
+        for (let i = 0; i < leadingPadding; i++) cells.push(false);
+        for (let i = 0; i < daysInMonth; i++) cells.push(true);
+        while (cells.length % 7 !== 0) cells.push(false);
+
+        const output: boolean[][] = [];
+        for (let i = 0; i < cells.length; i += 7) {
+            output.push(cells.slice(i, i + 7));
+        }
+
+        return output;
+    }, [monthDate]);
 
     const selectedRow = useMemo(() => rows.find((item) => item.dayNumber === selectedDay) ?? null, [rows, selectedDay]);
     const selectedDate = useMemo(() => new Date(monthDate.getFullYear(), monthDate.getMonth(), selectedDay), [monthDate, selectedDay]);
@@ -209,11 +239,12 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                         <Pressable onPress={goPrev} style={styles.navBtn}>
                             <Text style={styles.navTxt}>◀ मागील</Text>
                         </Pressable>
-                        <View style={styles.headerCenter}>
+                        <Pressable style={styles.headerCenter} onPress={openMonthPicker}>
                             <Text style={styles.headerTitle}>मराठी पंचांग महिना</Text>
                             <Text style={styles.heading}>{monthLabel}</Text>
                             <Text style={styles.monthMetaSub}>जिल्हा: {district.name} • वर्ष: {formatMarathiNumber(getOfflineYear())}</Text>
-                        </View>
+                            <Text style={styles.monthMetaHint}>महिना बदलण्यासाठी इथे टॅप करा</Text>
+                        </Pressable>
                         <Pressable onPress={goNext} style={styles.navBtn}>
                             <Text style={styles.navTxt}>पुढील ▶</Text>
                         </Pressable>
@@ -232,16 +263,32 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                             <View style={[styles.legendBox, styles.legendUpwas]} />
                             <Text style={styles.legendText}>उपवास / व्रत</Text>
                         </View>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendBox, styles.legendPurnima]} />
+                            <Text style={styles.legendText}>पोर्णिमा</Text>
+                        </View>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendBox, styles.legendAmavasya]} />
+                            <Text style={styles.legendText}>अमावास्या</Text>
+                        </View>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendBadge, styles.badgeFestival]} />
+                            <Text style={styles.legendText}>विशेष</Text>
+                        </View>
                     </View>
                 </View>
 
                 {loading && !gridReady ? (
                     <View style={styles.skeletonWrap}>
-                        {Array.from({ length: 5 }).map((_, rowIndex) => (
-                            <View key={`skeleton-row-${rowIndex}`} style={styles.skeletonRow}>
-                                {Array.from({ length: 7 }).map((__, columnIndex) => (
-                                    <ShimmerBlock key={`skeleton-cell-${rowIndex}-${columnIndex}`} height={66} borderRadius={12} style={styles.skeletonCell} />
-                                ))}
+                        {skeletonWeeks.map((week, weekIndex) => (
+                            <View key={`skeleton-row-${weekIndex}`} style={styles.skeletonRow}>
+                                {week.map((hasDay, dayIndex) =>
+                                    hasDay ? (
+                                        <ShimmerBlock key={`skeleton-cell-${weekIndex}-${dayIndex}`} height={66} borderRadius={12} style={styles.skeletonCell} />
+                                    ) : (
+                                        <View key={`skeleton-empty-${weekIndex}-${dayIndex}`} style={styles.cellEmpty} />
+                                    )
+                                )}
                             </View>
                         ))}
                     </View>
@@ -269,6 +316,8 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                                         const isSelected = detailOpen && day.dayNumber === selectedDay;
                                         const hasFestival = day.festivals.length > 0;
                                         const miniTithi = day.tithi.split(' ')[0] ?? day.tithi;
+                                        const isPurnima = /पोर्णिमा|पौर्णिमा/.test(day.tithi);
+                                        const isAmavasya = /अमावास्या|अमावस्या/.test(day.tithi);
                                         const isSunday = dayIndex === 6;
                                         const isSaturday = dayIndex === 5;
 
@@ -277,10 +326,12 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                                                 key={day.dateKey}
                                                 style={[
                                                     styles.cell,
-                                                    isSaturday && !hasFestival && !day.hasUpwas && styles.cellSaturday,
-                                                    isSunday && !hasFestival && !day.hasUpwas && styles.cellSunday,
-                                                    hasFestival && !day.hasUpwas && styles.cellFestival,
-                                                    day.hasUpwas && styles.cellUpwas,
+                                                    isSaturday && !hasFestival && !day.hasUpwas && !isPurnima && !isAmavasya && styles.cellSaturday,
+                                                    isSunday && !hasFestival && !day.hasUpwas && !isPurnima && !isAmavasya && styles.cellSunday,
+                                                    hasFestival && !day.hasUpwas && !isPurnima && !isAmavasya && styles.cellFestival,
+                                                    day.hasUpwas && !isPurnima && !isAmavasya && styles.cellUpwas,
+                                                    isPurnima && styles.cellPurnima,
+                                                    isAmavasya && styles.cellAmavasya,
                                                     isToday && styles.cellToday,
                                                     isSelected && !isToday && styles.cellSelected
                                                 ]}
@@ -309,7 +360,6 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                                         <Text style={styles.detailDateLabel}>{monthLabel}</Text>
                                     </View>
                                     <View style={styles.detailSummary}>
-                                        <Text style={styles.detailTitle}>निवडलेला दिवस</Text>
                                         <Text style={styles.tithi}>{selectedRow.tithi}</Text>
                                         <Text style={styles.detailHint}>{selectedRow.hasUpwas ? 'उपवास / व्रत आहे' : 'सामान्य दिवस'}</Text>
                                     </View>
@@ -412,6 +462,27 @@ function CalendarScreenBase({ district, largeTextMode }: Props) {
                         </View>
                     </View>
                 </Modal>
+
+                <Modal visible={monthPickerOpen} transparent animationType="fade" onRequestClose={closeMonthPicker}>
+                    <Pressable style={styles.monthPickerBackdrop} onPress={closeMonthPicker}>
+                        <View style={styles.monthPickerCard}>
+                            <Text style={styles.monthPickerTitle}>महिना निवडा</Text>
+                            {monthOptions.map((item, index) => {
+                                const label = formatMarathiMonthYear(item);
+                                const isActive = item.getMonth() === monthDate.getMonth();
+                                return (
+                                    <Pressable
+                                        key={`month-${index}`}
+                                        style={[styles.monthPickerItem, isActive && styles.monthPickerItemActive]}
+                                        onPress={() => selectMonth(index)}
+                                    >
+                                        <Text style={[styles.monthPickerItemText, isActive && styles.monthPickerItemTextActive]}>{label}</Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+                    </Pressable>
+                </Modal>
             </ScrollView>
         </View>
     );
@@ -484,6 +555,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontWeight: '600'
     },
+    monthMetaHint: {
+        marginTop: 4,
+        color: colors.primary,
+        fontSize: 11,
+        fontWeight: '800'
+    },
     legendRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -515,10 +592,27 @@ const styles = StyleSheet.create({
         borderColor: '#E57373',
         borderWidth: 1
     },
+    legendPurnima: {
+        backgroundColor: '#DDD6FE', // Matches cellPurnima backgroundColor
+        borderColor: '#7C3AED',
+        borderWidth: 1
+    },
+    legendAmavasya: {
+        backgroundColor: '#E5E7EB', // Matches cellAmavasya backgroundColor
+        borderColor: '#1F2937',
+        borderWidth: 1
+    },
     legendText: {
         color: colors.muted,
         fontSize: 12,
         fontWeight: '700'
+    },
+    legendBadge: {
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     loading: {
         marginTop: spacing.lg,
@@ -609,6 +703,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#FCE4EC',
         borderColor: '#E57373'
     },
+    cellPurnima: {
+        backgroundColor: '#DDD6FE',
+        borderColor: '#7C3AED'
+    },
+    cellAmavasya: {
+        backgroundColor: '#E5E7EB',
+        borderColor: '#1F2937'
+    },
     cellToday: {
         borderColor: colors.primary,
         backgroundColor: '#FFF3E0',
@@ -620,7 +722,7 @@ const styles = StyleSheet.create({
     },
     cellTopRow: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'flex-start'
     },
     cellDay: {
@@ -644,6 +746,31 @@ const styles = StyleSheet.create({
         flexShrink: 1,
         minHeight: 22,
         paddingBottom: 4
+    },
+    badge: {
+        minWidth: 16,
+        height: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4
+    },
+    badgeText: {
+        color: '#FFFFFF',
+        fontSize: 9,
+        fontWeight: '900'
+    },
+    badgePurnima: {
+        backgroundColor: '#7C3AED'
+    },
+    badgeAmavasya: {
+        backgroundColor: '#1F2937'
+    },
+    badgeFestival: {
+        backgroundColor: '#F97316'
+    },
+    badgeUpwas: {
+        backgroundColor: '#C026D3'
     },
     detailCard: {
         backgroundColor: colors.card,
@@ -769,5 +896,46 @@ const styles = StyleSheet.create({
         color: colors.primary,
         fontWeight: '900',
         marginBottom: 6
+    },
+    monthPickerBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        padding: spacing.md
+    },
+    monthPickerCard: {
+        backgroundColor: colors.card,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: spacing.md
+    },
+    monthPickerTitle: {
+        color: colors.primary,
+        fontSize: 18,
+        fontWeight: '900',
+        marginBottom: spacing.sm,
+        textAlign: 'center'
+    },
+    monthPickerItem: {
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+        marginBottom: 8
+    },
+    monthPickerItemActive: {
+        backgroundColor: '#FFE0B2',
+        borderColor: colors.primary
+    },
+    monthPickerItemText: {
+        color: colors.text,
+        fontWeight: '700',
+        textAlign: 'center'
+    },
+    monthPickerItemTextActive: {
+        color: colors.primary,
+        fontWeight: '900'
     }
 });

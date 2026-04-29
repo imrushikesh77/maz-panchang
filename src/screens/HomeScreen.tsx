@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { InteractionManager, PanResponder, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { InteractionManager, Modal, PanResponder, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { MarathiDistrict } from '../types';
 import { getOfflineYear, getPanchangForDate } from '../services/panchangService';
@@ -22,6 +22,8 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
     const [refreshing, setRefreshing] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState('');
+    const [faqOpen, setFaqOpen] = useState(false);
+    const [datePickerOpen, setDatePickerOpen] = useState(false);
     const [bundle, setBundle] = useState<Awaited<ReturnType<typeof getPanchangForDate>> | null>(null);
     const [tomorrowBundle, setTomorrowBundle] = useState<Awaited<ReturnType<typeof getPanchangForDate>> | null>(null);
     const requestId = useRef(0);
@@ -96,6 +98,13 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
         setSelectedDate(new Date());
     }, []);
 
+    const openDatePicker = useCallback(() => setDatePickerOpen(true), []);
+    const closeDatePicker = useCallback(() => setDatePickerOpen(false), []);
+    const selectDate = useCallback((date: Date) => {
+        setSelectedDate(date);
+        setDatePickerOpen(false);
+    }, []);
+
     const panResponder = useMemo(
         () =>
             PanResponder.create({
@@ -128,6 +137,26 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
     const selectedFestivalCount = activeBundle?.marathiFestivals.length ?? 0;
     const selectedUpwasCount = activeBundle?.upwasItems.length ?? 0;
     const showingInitialLoading = loading && !bundle;
+
+    const datePickerWeeks = useMemo(() => {
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth();
+        const firstWeekday = new Date(year, month, 1).getDay();
+        const leadingPadding = firstWeekday === 0 ? 6 : firstWeekday - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const cells: (number | null)[] = [];
+
+        for (let i = 0; i < leadingPadding; i++) cells.push(null);
+        for (let i = 1; i <= daysInMonth; i++) cells.push(i);
+        while (cells.length % 7 !== 0) cells.push(null);
+
+        const output: (number | null)[][] = [];
+        for (let i = 0; i < cells.length; i += 7) {
+            output.push(cells.slice(i, i + 7));
+        }
+
+        return output;
+    }, [selectedDate]);
 
     if (showingInitialLoading) {
         return (
@@ -187,12 +216,12 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
                     </View>
 
                     <View style={styles.heroDateRow}>
-                        <View style={styles.dateBlock}>
+                        <Pressable style={styles.dateBlock} onPress={openDatePicker}>
                             <Text style={[styles.dateNumber, largeTextMode && styles.dateNumberLarge]}>
                                 {formatMarathiNumber(selectedDate.getDate())}
                             </Text>
                             <Text style={styles.monthYear}>{monthYearLabel}</Text>
-                        </View>
+                        </Pressable>
                         <View style={styles.dateMetaWrap}>
                             <View style={styles.metaChip}>
                                 <Text style={styles.metaLabel}>वार</Text>
@@ -240,11 +269,14 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
                 ) : (
                     <>
                         <SectionCard title="पंचांग माहिती" icon="book-open-page-variant-outline">
+                            <InfoRow largeTextMode={largeTextMode} label="महिना" value={normalizeMarathi(activeBundle.data.chandramasa.amantaName)} icon="calendar-month" />
+                            <InfoRow largeTextMode={largeTextMode} label="पक्ष" value={activeBundle.data.tithis[0]?.paksha === 'शुक्ल' ? 'शुक्ल पक्ष' : (activeBundle.data.tithis[0]?.paksha === 'कृष्ण' ? 'कृष्ण पक्ष' : '—')} icon="moon-waning-crescent" />
+                            <InfoRow largeTextMode={largeTextMode} label="विक्रम संवत" value={formatMarathiNumber(activeBundle.data.samvat.vikramSamvat)} icon="calendar-multiselect" />
                             <InfoRow largeTextMode={largeTextMode} label="वार" value={normalizeMarathi(activeBundle.data.vara.name)} icon="calendar-today" />
-                            <InfoRow largeTextMode={largeTextMode} label="तिथी" value={normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '—')} icon="moon-first-quarter" />
-                            <InfoRow largeTextMode={largeTextMode} label="नक्षत्र" value={normalizeMarathi(activeBundle.data.nakshatras[0]?.name ?? '—')} icon="star-four-points" />
-                            <InfoRow largeTextMode={largeTextMode} label="योग" value={normalizeMarathi(activeBundle.data.yogas[0]?.name ?? '—')} icon="meditation" />
-                            <InfoRow largeTextMode={largeTextMode} label="करण" value={normalizeMarathi(activeBundle.data.karanas[0]?.name ?? '—')} icon="leaf" />
+                            <InfoRow largeTextMode={largeTextMode} label="तिथी" value={`${normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '—')} (समाप्ती: ${formatLocalTime(activeBundle.data.tithis[0]?.endTime)})`} icon="moon-first-quarter" />
+                            <InfoRow largeTextMode={largeTextMode} label="नक्षत्र" value={`${normalizeMarathi(activeBundle.data.nakshatras[0]?.name ?? '—')} (समाप्ती: ${formatLocalTime(activeBundle.data.nakshatras[0]?.endTime)})`} icon="star-four-points" />
+                            <InfoRow largeTextMode={largeTextMode} label="योग" value={`${normalizeMarathi(activeBundle.data.yogas[0]?.name ?? '—')} (समाप्ती: ${formatLocalTime(activeBundle.data.yogas[0]?.endTime)})`} icon="meditation" />
+                            <InfoRow largeTextMode={largeTextMode} label="करण" value={`${normalizeMarathi(activeBundle.data.karanas[0]?.name ?? '—')} (समाप्ती: ${formatLocalTime(activeBundle.data.karanas[0]?.endTime)})`} icon="leaf" />
                         </SectionCard>
 
                         <SectionCard title="महत्त्वाच्या वेळा" icon="clock-outline">
@@ -314,6 +346,53 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
                                 </>
                             )}
                         </SectionCard>
+                        <View style={styles.proseWrap}>
+                            <Text style={styles.proseText}>
+                                हिंदू पंचांगाच्या अनुसार {formatMarathiNumber(selectedDate.getDate())} {formatMarathiDate(selectedDate).split(' ')[1]} {formatMarathiNumber(selectedDate.getFullYear())} ला {normalizeMarathi(activeBundle.data.chandramasa.amantaName)} महिन्याच्या {activeBundle.data.tithis[0]?.paksha === 'शुक्ल' ? 'शुक्ल' : 'कृष्ण'} पक्षाची {normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '')} तिथि आहे. ज्योतिषीय दृष्टीने {normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '')} तिथि {activeBundle.data.tithis[0]?.endTime ? formatLocalTime(activeBundle.data.tithis[0]?.endTime) : '—'} पर्यंत राहील आणि त्या नंतर पुढील दिवशीची तिथि लागेल.
+                            </Text>
+                        </View>
+
+                        <SectionCard title="नेहमी विचारले जाणारे प्रश्न" icon="help-circle-outline">
+                            <Pressable style={styles.faqToggle} onPress={() => setFaqOpen((old) => !old)}>
+                                <Text style={styles.faqToggleText}>{faqOpen ? 'प्रश्न लपवा' : 'प्रश्न पाहा'}</Text>
+                                <MaterialCommunityIcons
+                                    name={faqOpen ? 'chevron-up' : 'chevron-down'}
+                                    size={20}
+                                    color={colors.primary}
+                                />
+                            </Pressable>
+
+                            {faqOpen && (
+                                <>
+                                    <Text style={styles.faqQ}>1. शुक्ल तिथी म्हणजे काय?</Text>
+                                    <Text style={styles.faqA}>शुक्ल पक्षात येणारी तिथी शुक्ल तिथी म्हणून ओळखली जाते. शुक्ल पक्षात 15 तिथी असतात.</Text>
+
+                                    <Text style={styles.faqQ}>2. तिथी किती आहेत?</Text>
+                                    <Text style={styles.faqA}>ज्योतिषशास्त्रानुसार, एका महिन्यात दोन पक्षांसह एकूण 30 तिथी असतात म्हणजे, शुक्ल पक्ष (अमावस्यापासून सुरू होतो आणि पौर्णिमेला संपतो) आणि कृष्ण पक्ष (पौर्णिमेपासून सुरू होतो आणि अमावस्येला संपतो). प्रत्येक पक्षात 15 तिथी असतात.</Text>
+
+                                    <Text style={styles.faqQ}>3. कोणती तिथी जन्मासाठी चांगली आहे?</Text>
+                                    <Text style={styles.faqA}>ज्योतिषशास्त्राच्या क्षेत्रात, कोणती ही विशिष्ट तिथी जन्मासाठी चांगली नाही कारण प्रत्येक तिथीचे स्वतःचे महत्त्व आहे.</Text>
+
+                                    <Text style={styles.faqQ}>4. आजची तिथी काय आहे?</Text>
+                                    <Text style={styles.faqA}>हिंदू पंचांगानुसार, आज विक्रम संवत {formatMarathiNumber(activeBundle.data.samvat.vikramSamvat)} च्या {normalizeMarathi(activeBundle.data.chandramasa.amantaName)} महिन्याच्या {activeBundle.data.tithis[0]?.paksha === 'शुक्ल' ? 'शुक्ल' : 'कृष्ण'} पक्षाची {normalizeMarathi(activeBundle.data.tithis[0]?.name ?? '')} तिथी आहे.</Text>
+
+                                    <Text style={styles.faqQ}>5. शुभ तिथी म्हणजे काय?</Text>
+                                    <Text style={styles.faqA}>चांगली तिथी म्हणजे ज्यामध्ये योग आणि कर्म चांगले असतात. जर ते शुक्ल पक्षात आले तर ते अधिक शुभ मानले जाते.</Text>
+
+                                    <Text style={styles.faqQ}>6. त्रयोदशी हा शुभ दिवस आहे का?</Text>
+                                    <Text style={styles.faqA}>होय, हे शुभ आहे कारण ते भगवान शिवाला समर्पित आहे.</Text>
+
+                                    <Text style={styles.faqQ}>7. नवीन प्रोजेक्ट सुरू करण्यासाठी नवमी हा चांगला दिवस आहे का?</Text>
+                                    <Text style={styles.faqA}>कोणत्या ही नवीन प्रोजेक्टच्या प्रारंभासाठी हे शुभ मानले जाते परंतु, जेव्हा ते शुक्ल पक्षात येते तेव्हा त्याचे महत्त्व मोठे असते.</Text>
+
+                                    <Text style={styles.faqQ}>8. अष्टमी चांगली की वाईट?</Text>
+                                    <Text style={styles.faqA}>अष्टमी ही एक चांगली तिथी आहे आणि त्याबद्दलची सर्वात चांगली गोष्ट म्हणजे ती शुक्ल पक्षात असो किंवा कृष्ण पक्षात असो तिला तितकेच महत्त्व असते.</Text>
+
+                                    <Text style={styles.faqQ}>9. हिंदू पंचांगानुसार आज कोणता दिवस आहे?</Text>
+                                    <Text style={styles.faqA}>हिंदू पंचांगानुसार {normalizeMarathi(activeBundle.data.vara.name)} दिवस आहे.</Text>
+                                </>
+                            )}
+                        </SectionCard>
                     </>
                 )}
 
@@ -321,6 +400,49 @@ function HomeScreenBase({ district, largeTextMode }: Props) {
                     <Text style={styles.footerNoteText}>ऑफलाइन वर्ष: {formatMarathiNumber(getOfflineYear())}</Text>
                 </View>
             </ScrollView>
+
+            <Modal visible={datePickerOpen} animationType="slide" onRequestClose={closeDatePicker} transparent>
+                <View style={styles.datePickerBackdrop}>
+                    <View style={styles.datePickerCard}>
+                        <View style={styles.datePickerHeader}>
+                            <Text style={styles.datePickerTitle}>दिवस निवडा</Text>
+                            <Pressable onPress={closeDatePicker}>
+                                <Text style={styles.datePickerClose}>बंद</Text>
+                            </Pressable>
+                        </View>
+                        <ScrollView contentContainerStyle={styles.datePickerContent}>
+                            <View style={styles.datePickerGrid}>
+                                {['सोम', 'मंगळ', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'रवि'].map((label) => (
+                                    <Text key={label} style={styles.datePickerWeekday}>
+                                        {label}
+                                    </Text>
+                                ))}
+                                {datePickerWeeks.map((week, weekIndex) =>
+                                    week.map((day, dayIndex) => (
+                                        <Pressable
+                                            key={`day-${weekIndex}-${dayIndex}`}
+                                            style={[
+                                                styles.datePickerDay,
+                                                day === selectedDate.getDate() && styles.datePickerDaySelected
+                                            ]}
+                                            onPress={day ? () => selectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day)) : undefined}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.datePickerDayText,
+                                                    day === selectedDate.getDate() && styles.datePickerDayTextSelected
+                                                ]}
+                                            >
+                                                {day ? formatMarathiNumber(day) : ''}
+                                            </Text>
+                                        </Pressable>
+                                    ))
+                                )}
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -567,6 +689,47 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         marginTop: spacing.xs
     },
+    proseWrap: {
+        backgroundColor: colors.card,
+        borderRadius: 18,
+        padding: spacing.md,
+        marginBottom: spacing.sm,
+        borderWidth: 1,
+        borderColor: colors.border
+    },
+    proseText: {
+        color: colors.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    faqQ: {
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '700',
+        marginTop: spacing.sm,
+        marginBottom: 4
+    },
+    faqToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: '#FFF6EA'
+    },
+    faqToggleText: {
+        color: colors.primary,
+        fontWeight: '800'
+    },
+    faqA: {
+        color: colors.text,
+        fontSize: 15,
+        lineHeight: 22,
+        marginBottom: spacing.sm
+    },
     footerNote: {
         alignItems: 'center',
         marginTop: spacing.sm,
@@ -576,5 +739,68 @@ const styles = StyleSheet.create({
         color: colors.muted,
         fontSize: 12,
         fontWeight: '600'
+    },
+    datePickerBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        padding: spacing.md
+    },
+    datePickerCard: {
+        backgroundColor: colors.card,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: spacing.md
+    },
+    datePickerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.sm
+    },
+    datePickerTitle: {
+        color: colors.primary,
+        fontSize: 18,
+        fontWeight: '900'
+    },
+    datePickerClose: {
+        color: colors.primary,
+        fontWeight: '900',
+        fontSize: 15
+    },
+    datePickerContent: {
+        paddingVertical: spacing.sm
+    },
+    datePickerGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap'
+    },
+    datePickerWeekday: {
+        width: '14.28%',
+        textAlign: 'center',
+        color: colors.muted,
+        fontSize: 12,
+        fontWeight: '700',
+        marginBottom: 8
+    },
+    datePickerDay: {
+        width: '14.28%',
+        aspectRatio: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 4,
+        borderRadius: 8
+    },
+    datePickerDaySelected: {
+        backgroundColor: colors.primary
+    },
+    datePickerDayText: {
+        color: colors.text,
+        fontSize: 16,
+        fontWeight: '700'
+    },
+    datePickerDayTextSelected: {
+        color: '#FFFFFF'
     }
 });

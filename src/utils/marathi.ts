@@ -22,7 +22,7 @@ export const normalizeMarathi = (input: string) => {
 };
 
 export const isUpwasText = (festivalName: string) => {
-    const keywords = ['एकादशी', 'चतुर्थी', 'प्रदोष', 'व्रत', 'उपवास', 'शिवरात्री', 'अमावास्या', 'पूर्णिमा'];
+    const keywords = ['एकादशी', 'चतुर्थी', 'प्रदोष', 'व्रत', 'उपवास', 'शिवरात्री', 'अमावास्या', 'पोर्णिमा'];
     return keywords.some((item) => festivalName.includes(item));
 };
 

@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MAHARASHTRA_DISTRICTS } from './src/constants/locations';
 import { colors } from './src/constants/theme';
 import { CalendarScreen } from './src/screens/CalendarScreen';
@@ -21,11 +22,11 @@ const tabLabels: Record<TabKey, string> = {
   settings: 'सेटिंग्स'
 };
 
-const tabIcons: Record<TabKey, string> = {
-  home: '☀',
-  calendar: '▦',
-  festivals: '✿',
-  settings: '⚙'
+const tabIcons: Record<TabKey, React.ComponentProps<typeof MaterialCommunityIcons>['name']> = {
+  home: 'home-variant',
+  calendar: 'calendar-month',
+  festivals: 'calendar-star',
+  settings: 'cog'
 };
 
 export default function App() {
@@ -144,7 +145,11 @@ export default function App() {
                 setVisitedTabs((old) => (old[item] ? old : { ...old, [item]: true }));
               }}
             >
-              <Text style={[styles.tabIcon, tab === item && styles.tabIconActive]}>{tabIcons[item]}</Text>
+              <MaterialCommunityIcons
+                name={tabIcons[item]}
+                size={18}
+                color={tab === item ? colors.primary : colors.muted}
+              />
               <Text style={[styles.tabTxt, tab === item && styles.tabTxtActive]}>{tabLabels[item]}</Text>
             </Pressable>
           ))}
@@ -202,14 +207,6 @@ const styles = StyleSheet.create({
   },
   tabBtnActive: {
     backgroundColor: '#FFE0B2'
-  },
-  tabIcon: {
-    color: colors.muted,
-    fontSize: 15,
-    fontWeight: '900'
-  },
-  tabIconActive: {
-    color: colors.primary
   },
   tabTxt: {
     color: colors.muted,
